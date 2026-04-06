@@ -36,17 +36,7 @@ Because the data access is through **Prisma**, shifting to **PostgreSQL at deplo
    npm install
    ```
 
-2. **Environment**
-
-   Create `.env` in the project root (example):
-
-   ```env
-   DATABASE_URL="file:./dev.db"
-   JWT_SECRET="replace-with-a-strong-secret"
-   PORT=3000
-   ```
-
-3. **Database**:
+2. **Database**:
 
    ```bash
    npx prisma migrate dev
@@ -58,7 +48,7 @@ Because the data access is through **Prisma**, shifting to **PostgreSQL at deplo
    - **Email:** `finance-admin@example.com`  
    - **Password:** `Admin123!`  
 
-4. **Run tests first (recommended for evaluators)**:
+3. **Run tests first (recommended for evaluators)**:
 
    ```bash
    npm test
@@ -68,7 +58,7 @@ Because the data access is through **Prisma**, shifting to **PostgreSQL at deplo
    - run Prisma seed
    - run the integration-style HTTP tests (auth, RBAC, records, dashboard, etc.)
 
-5. **Run the server**:
+4. **Run the server**:
 
    ```bash
    npm run dev
@@ -190,8 +180,8 @@ In most local-machine submissions, you **cannot provide a truly permanent public
 - On **free** ngrok plans, the public URL typically **changes** each time you restart the tunnel. A stable URL generally requires a **paid** plan (reserved domain) or hosting the backend on an always-on server.
 
 For evaluation, the safest approach is usually:
-- provide the Swagger UI locally at `/docs` and instructions to run it, or
-- deploy the API to a cloud host (Render/Railway/Fly.io/etc.) and share that hosted `/docs` URL.
+- Provide the Swagger UI locally at `/docs` and instructions to run it, or
+- Deploy the API to a cloud host (Render/Railway/Fly.io/etc.) and share that hosted `/docs` URL.
 - So for deploying we need to change database from SQLite to PostgreSQL, which I can shift easily, but it introduce unnecessary complexity that's why for evaluation purpose I am skiping it for now, as per assignment's requirements to keep it simple and clean.  
 
 ## Assumptions & tradeoffs
