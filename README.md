@@ -118,4 +118,3 @@ Single health test: `npm run test:health`.
 - **Category breakdown** sums amounts per category without combining income/expense dimensions; categories are treated as user-defined labels.  
 - **Weekly trends** bucket by **Monday** of the week (UTC-based ISO date key in `buckets`).
 
-OpenAPI/Swagger is not generated; this table is the single source of route documentation for now.
