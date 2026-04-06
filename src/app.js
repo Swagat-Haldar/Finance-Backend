@@ -6,6 +6,8 @@
 const express = require('express');
 const ENV = require('./config/env');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const authRoutes = require('./routes/auth.routes');
 const testRoutes = require('./routes/test.routes');
 const recordRoutes = require('./routes/record.routes');
@@ -49,6 +51,13 @@ app.get('/health', (req, res) => {
     message: 'Server is running successfully'
   });
 });
+
+// Swagger (OpenAPI) docs
+app.get('/docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).send(swaggerSpec);
+});
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
 
 app.use('/auth', authLimiter, authRoutes);
 if (ENV.ENABLE_TEST_ROUTES) {
