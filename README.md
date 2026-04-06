@@ -2,11 +2,31 @@
 
 REST API for a personal finance dashboard: **users & roles**, **financial records**, **aggregated dashboard data**, and **JWT + RBAC**.
 
+## Implemented features (assignment + enhancements)
+
+- **Authentication using tokens**: JWT via `Authorization: Bearer <token>`.
+- **Role-based access control (RBAC)**: `VIEWER`, `ANALYST`, `ADMIN` enforced at route level.
+- **Pagination for record listing**: `GET /records?page=&limit=` returns `{ items, page, limit, total }`.
+- **Search support**: `GET /records?q=` searches `category` and `notes`.
+- **Soft delete functionality**: `DELETE /records/:id` sets `deletedAt` and excludes records from lists + dashboard analytics.
+- **Rate limiting**: in-memory limits on `/auth`, `/records`, `/dashboard` (returns `429` on abuse).
+- **Tests (integration scripts)**: `npm test` seeds DB then runs end-to-end HTTP tests.
+- **API documentation**: Swagger UI at `/docs` + OpenAPI JSON at `/docs.json`, plus route tables in this README.
+
 ## Stack
 
 - Node.js, Express  
 - Prisma ORM + **SQLite** (`DATABASE_URL` in `.env`)  
 - JWT auth, bcrypt passwords, Joi validation  
+
+## Database choice (SQLite now, PostgreSQL later)
+
+This project uses **SQLite** for simplicity and evaluator friendliness (single local file DB).
+Because the data access is through **Prisma**, shifting to **PostgreSQL at deployment time** is straightforward:
+
+- Update `prisma/schema.prisma` datasource provider to `postgresql`
+- Change `DATABASE_URL` to a Postgres connection string
+- Run Prisma migrations against the new database
 
 ## Setup
 
@@ -16,7 +36,17 @@ REST API for a personal finance dashboard: **users & roles**, **financial record
    npm install
    ```
 
-2. **Database**:
+2. **Environment**
+
+   Create `.env` in the project root (example):
+
+   ```env
+   DATABASE_URL="file:./dev.db"
+   JWT_SECRET="replace-with-a-strong-secret"
+   PORT=3000
+   ```
+
+3. **Database**:
 
    ```bash
    npx prisma migrate dev
@@ -28,13 +58,26 @@ REST API for a personal finance dashboard: **users & roles**, **financial record
    - **Email:** `finance-admin@example.com`  
    - **Password:** `Admin123!`  
 
-3. **Run**:
+4. **Run tests first (recommended for evaluators)**:
+
+   ```bash
+   npm test
+   ```
+
+   This will:
+   - run Prisma seed
+   - run the integration-style HTTP tests (auth, RBAC, records, dashboard, etc.)
+
+5. **Run the server**:
 
    ```bash
    npm run dev
    ```
 
    Health check: `GET http://localhost:3000/health`
+
+   If you see `EADDRINUSE: address already in use :::3000`, port 3000 is already occupied.
+   Stop the other running server (or change `PORT` in `.env`) and restart.
 
 ## Roles & access
 
@@ -99,6 +142,31 @@ Use header: `Authorization: Bearer <token>`.
 
 If `ENABLE_TEST_ROUTES=true` in the environment, `/test/view`, `/test/admin`, `/test/analyst` are mounted for quick RBAC checks. **Leave unset in production-like deploys.**
 
+## Swagger / OpenAPI (what evaluators should use)
+
+- **Swagger UI**: `http://localhost:3000/docs`
+- **OpenAPI JSON**: `http://localhost:3000/docs.json`
+
+### Swagger step-by-step testing (full flow)
+
+1. Start server: `npm run dev`
+2. Open Swagger: `http://localhost:3000/docs`
+3. Get admin token:
+   - **Auth → POST `/auth/login`**
+   - Body:
+     ```json
+     { "email": "finance-admin@example.com", "password": "Admin123!" }
+     ```
+   - Copy `token` from the response.
+4. Click **Authorize** (top-right) and paste:
+   - `Bearer <token>`
+5. Now test endpoints in this suggested order:
+   - **Users (admin)**: `GET /users` then `PATCH /users/{id}` (promote user role / set INACTIVE)
+   - **Records (admin)**: `POST /records`, `PATCH /records/{id}` (partial), `DELETE /records/{id}` (soft delete)
+   - **Records (analyst)**: `GET /records` with query params (`page`, `limit`, `q`, `type`, `category`)
+   - **Dashboard (any role)**: `/dashboard/summary`, `/dashboard/category`, `/dashboard/trends?granularity=week`, `/dashboard/recent`
+   - **Rate limiting**: repeat `POST /auth/login` with wrong password rapidly until `429` appears
+
 ## Tests
 
 Runs **Prisma seed** first (expects DB + schema), then integration scripts in order:
@@ -108,6 +176,23 @@ npm test
 ```
 
 Single health test: `npm run test:health`.
+
+## Submitting a public Swagger link (not localhost)
+
+In most local-machine submissions, you **cannot provide a truly permanent public Swagger link**:
+
+- `http://localhost:3000/docs` works only on **my own PC**. Other people cannot reach my machine’s `localhost`.
+- A tunnel (ngrok/Cloudflare tunnel/etc.) only works **while all of these are running**:
+  - your computer is **online**
+  - the backend server is **running**
+  - the tunnel process is **running**
+- If your system goes **offline** or you close the tunnel/server, the “public link” stops working.
+- On **free** ngrok plans, the public URL typically **changes** each time you restart the tunnel. A stable URL generally requires a **paid** plan (reserved domain) or hosting the backend on an always-on server.
+
+For evaluation, the safest approach is usually:
+- provide the Swagger UI locally at `/docs` and instructions to run it, or
+- deploy the API to a cloud host (Render/Railway/Fly.io/etc.) and share that hosted `/docs` URL.
+- So for deploying we need to change database from SQLite to PostgreSQL, which I can shift easily, but it introduce unnecessary complexity that's why for evaluation purpose I am skiping it for now, as per assignment's requirements to keep it simple and clean.  
 
 ## Assumptions & tradeoffs
 
